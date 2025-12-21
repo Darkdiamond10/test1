@@ -2,24 +2,24 @@ import os
 import re
 import zipfile
 import shutil
-from .utils import console, ScannerUtils, G, R, C, YELLOW, MAGENTA, RESET
+from .utils import console, ScannerUtils
 
 class ApkAnalyzer:
     @staticmethod
     def unzip_apk(apk_path, extract_to):
         if not os.path.exists(apk_path):
-            console.print(f"{R}[!] Error: APK file '{apk_path}' not found!{RESET}")
+            console.print(f"[red][!] Error: APK file '{apk_path}' not found![/red]")
             return False
         if os.path.exists(extract_to):
-            console.print(f"{YELLOW}[!] Warning: folder '{extract_to}' exists, removing...{RESET}")
+            console.print(f"[yellow][!] Warning: folder '{extract_to}' exists, removing...[/yellow]")
             shutil.rmtree(extract_to)
         try:
             with zipfile.ZipFile(apk_path, 'r') as zip_ref:
                 zip_ref.extractall(extract_to)
-            console.print(f"{G}[+] APK extracted to: {extract_to}{RESET}")
+            console.print(f"[green][+] APK extracted to: {extract_to}[/green]")
             return True
         except Exception as e:
-            console.print(f"{R}[!] Error extracting APK: {e}{RESET}")
+            console.print(f"[red][!] Error extracting APK: {e}[/red]")
             return False
 
     @staticmethod
@@ -98,35 +98,35 @@ class ApkAnalyzer:
     @staticmethod
     def run():
         ScannerUtils.print_banner()
-        console.print(f"{R}\n    ☠️☠️☠️ APK CDN HUNTER ☠️☠️☠️\n    🔥 SCANNING APK FILE FOR SECRET DOMAINS 🔥\n    {RESET}")
-        apk_path = console.input(f"{C}🔍 Enter APK file path: {RESET}").strip()
-        result_folder = console.input(f"{C}💾 Enter folder name to save results: {RESET}").strip()
+        console.print(f"[red]\n    ☠️☠️☠️ APK CDN HUNTER ☠️☠️☠️\n    🔥 SCANNING APK FILE FOR SECRET DOMAINS 🔥\n    [/red]")
+        apk_path = console.input(f"[cyan]🔍 Enter APK file path: [/cyan]").strip()
+        result_folder = console.input(f"[cyan]💾 Enter folder name to save results: [/cyan]").strip()
 
-        ScannerUtils.slow_print(f"{MAGENTA}[*] Extracting APK file ...{RESET}")
+        ScannerUtils.slow_print(f"[magenta][*] Extracting APK file ...[/magenta]")
         if not ApkAnalyzer.unzip_apk(apk_path, result_folder + '_extracted'):
             return
 
-        ScannerUtils.slow_print(f"{MAGENTA}[*] Reading all files ...{RESET}")
+        ScannerUtils.slow_print(f"[magenta][*] Reading all files ...[/magenta]")
         texts = ApkAnalyzer.read_all_files(result_folder + '_extracted')
 
-        ScannerUtils.slow_print(f"{MAGENTA}[*] Extracting URLs and domains ...{RESET}")
+        ScannerUtils.slow_print(f"[magenta][*] Extracting URLs and domains ...[/magenta]")
         urls, domains = ApkAnalyzer.extract_domains_urls(texts)
 
-        ScannerUtils.slow_print(f"{MAGENTA}[*] Searching for important keywords ...{RESET}")
+        ScannerUtils.slow_print(f"[magenta][*] Searching for important keywords ...[/magenta]")
         keywords = ApkAnalyzer.extract_keywords(texts)
 
-        ScannerUtils.slow_print(f"{MAGENTA}[*] Extracting payment gateway URLs ...{RESET}")
+        ScannerUtils.slow_print(f"[magenta][*] Extracting payment gateway URLs ...[/magenta]")
         payments = ApkAnalyzer.extract_payment_urls(urls)
 
-        ScannerUtils.slow_print(f"{MAGENTA}[*] Analyzing domains and checking for CDN ...{RESET}")
+        ScannerUtils.slow_print(f"[magenta][*] Analyzing domains and checking for CDN ...[/magenta]")
         cdn_domains = set()
         for d in domains:
             if ApkAnalyzer.check_cdn(d):
                 cdn_domains.add(d)
 
-        ScannerUtils.slow_print(f"{G}[✔] Saving results ...{RESET}")
+        ScannerUtils.slow_print(f"[green][✔] Saving results ...[/green]")
         ApkAnalyzer.save_results(result_folder, urls, domains, keywords, cdn_domains, payments)
 
-        console.print(f"{YELLOW}\n[✔] Scan complete! Results saved in folder: {result_folder}{RESET}")
-        console.print(f"{YELLOW}Check files:\n - urls.txt\n - domains.txt\n - keywords.txt\n - cdn_domains.txt\n - payment_urls.txt\n{RESET}")
+        console.print(f"[yellow]\n[✔] Scan complete! Results saved in folder: {result_folder}[/yellow]")
+        console.print(f"[yellow]Check files:\n - urls.txt\n - domains.txt\n - keywords.txt\n - cdn_domains.txt\n - payment_urls.txt\n[/yellow]")
         console.input('Press Enter to return to main menu...')
