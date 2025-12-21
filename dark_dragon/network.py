@@ -7,8 +7,8 @@ import time
 from .utils import console, TargetUtils, G, R, C, YELLOW, MAGENTA, RESET
 
 class NetworkScanner:
-    # Legacy synchronous methods (kept for backward compatibility or single target use if needed,
-    # though we will shift to async)
+    # Legacy synchronous methods (kept for backward compatibility or single target use)
+    
     @staticmethod
     def scan_sni(domain, port, timeout=3):
         try:
@@ -201,8 +201,7 @@ class AsyncNetworkScanner:
                         loop = asyncio.get_event_loop()
                         await loop.run_in_executor(None, self._append_to_file, f"{target}:{self.port}\n")
                 else:
-                    # Negative result (can be verbose or quiet, usually quiet for bulk scan to avoid spam)
-                    # For now, let's print errors in RED but maybe simpler
+                    # Negative result
                      console.print(f"{R}[{self.progress}/{self.total}] {target} | {result[1]}{RESET}")
 
             except Exception as main_e:
@@ -216,8 +215,6 @@ class AsyncNetworkScanner:
         self.total = TargetUtils.count_targets(targets_input)
         queue = asyncio.Queue(maxsize=self.concurrency * 2)
 
-        # Determine if we need a session (HTTP/S) or not (Raw Sockets)
-        # We'll create one anyway for HTTP modes, it's cheap
         connector = aiohttp.TCPConnector(ssl=False, limit=self.concurrency)
         async with aiohttp.ClientSession(connector=connector) as session:
             workers = [asyncio.create_task(self.worker(session, queue)) for _ in range(self.concurrency)]
@@ -234,37 +231,4 @@ class AsyncNetworkScanner:
         console.print(f"\n{MAGENTA}[✓] Scan finished in {duration}s. Total Targets: {self.total}{RESET}")
 
     def run_bulk(self, targets_input):
-        asyncio.run(self.start_scan(targets_input))            sock.connect((domain, port))
-            connect_req = f"CONNECT google.com:443 HTTP/1.1\r\nHost: google.com\r\n\r\n"
-            sock.send(connect_req.encode())
-            resp = sock.recv(1024).decode(errors='ignore')
-            sock.close()
-            if '200 Connection established' in resp or 'HTTP/1.1 200' in resp:
-                return (True, 'Proxy OK')
-            return (False, 'Proxy connection failed')
-        except Exception as e:
-            return (False, str(e))
-
-    @staticmethod
-    def scan_http(domain, port, timeout=3):
-        try:
-            url = f"http://{domain}:{port}"
-            resp = requests.get(url, timeout=timeout, allow_redirects=False)
-            server = resp.headers.get('Server', 'Unknown')
-            if resp.status_code == 302:
-                return (False, f"Redirect 302 ignored | Server: {server}")
-            return (True, f"{resp.status_code} OK | Server: {server}")
-        except Exception as e:
-            return (False, str(e))
-
-    @staticmethod
-    def scan_https(domain, port, timeout=3):
-        try:
-            url = f"https://{domain}:{port}"
-            resp = requests.get(url, timeout=timeout, verify=False, allow_redirects=False)
-            server = resp.headers.get('Server', 'Unknown')
-            if resp.status_code == 302:
-                return (False, f"Redirect 302 ignored | Server: {server}")
-            return (True, f"{resp.status_code} OK | Server: {server}")
-        except Exception as e:
-            return (False, str(e))
+        asyncio.run(self.start_scan(targets_input))
