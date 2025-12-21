@@ -7,8 +7,8 @@ import time
 from .utils import console, TargetUtils, G, R, C, YELLOW, MAGENTA, RESET
 
 class NetworkScanner:
-    # Legacy synchronous methods (kept for backward compatibility or single target use if needed,
-    # though we will shift to async)
+    # Legacy synchronous methods (kept for backward compatibility or single target use)
+    
     @staticmethod
     def scan_sni(domain, port, timeout=3):
         try:
@@ -201,8 +201,7 @@ class AsyncNetworkScanner:
                         loop = asyncio.get_event_loop()
                         await loop.run_in_executor(None, self._append_to_file, f"{target}:{self.port}\n")
                 else:
-                    # Negative result (can be verbose or quiet, usually quiet for bulk scan to avoid spam)
-                    # For now, let's print errors in RED but maybe simpler
+                    # Negative result
                      console.print(f"{R}[{self.progress}/{self.total}] {target} | {result[1]}{RESET}")
 
             except Exception as main_e:
@@ -216,8 +215,6 @@ class AsyncNetworkScanner:
         self.total = TargetUtils.count_targets(targets_input)
         queue = asyncio.Queue(maxsize=self.concurrency * 2)
 
-        # Determine if we need a session (HTTP/S) or not (Raw Sockets)
-        # We'll create one anyway for HTTP modes, it's cheap
         connector = aiohttp.TCPConnector(ssl=False, limit=self.concurrency)
         async with aiohttp.ClientSession(connector=connector) as session:
             workers = [asyncio.create_task(self.worker(session, queue)) for _ in range(self.concurrency)]
