@@ -2,6 +2,7 @@ import asyncio
 import aiohttp
 import ipaddress
 import time
+import os
 from .utils import console, G, R, C, YELLOW, MAGENTA, RESET
 
 class CIDRScanner:
@@ -14,22 +15,45 @@ class CIDRScanner:
         self.start_time = time.time()
         self.cdn_keywords = ['cloudflare', 'cloudfront', 'akamai', 'google', 'fastly', 'openresty', 'tengine', 'varnish', 'google frontend', 'googlefrontend']
 
-    def generate_targets(self, ranges_list):
+    def _iter_targets(self, ranges_input):
+        """Helper to iterate over targets whether it's a list or a file path."""
+        if isinstance(ranges_input, str):
+            # Treat as file path
+            if os.path.isfile(ranges_input):
+                with open(ranges_input, 'r') as f:
+                    for line in f:
+                        line = line.strip()
+                        if line:
+                            yield line
+            else:
+                 console.print(f"{R}[!] File not found: {ranges_input}{RESET}")
+        else:
+            # Treat as list
+            for item in ranges_input:
+                yield item.strip()
+
+    def generate_targets(self, ranges_input):
         """Generator that yields IPs one by one to save memory."""
-        for net in ranges_list:
+        for net in self._iter_targets(ranges_input):
             try:
                 network = ipaddress.IPv4Network(net, strict=False)
                 for ip in network:
                     yield str(ip)
+            except ValueError:
+                # Assume it's a domain if not a valid IP/CIDR
+                yield net
             except Exception as e:
                 console.print(f"{R}[!] Invalid range: {net} ({e}){RESET}")
 
-    def count_targets(self, ranges_list):
+    def count_targets(self, ranges_input):
         count = 0
-        for net in ranges_list:
+        for net in self._iter_targets(ranges_input):
             try:
                 network = ipaddress.IPv4Network(net, strict=False)
                 count += network.num_addresses
+            except ValueError:
+                # Count as 1 for domain
+                count += 1
             except:
                 pass
         return count
@@ -76,10 +100,10 @@ class CIDRScanner:
             finally:
                 queue.task_done()
 
-    async def start_scan(self, ranges_list):
+    async def start_scan(self, ranges_input):
         console.print(f"{YELLOW}→ Preparing scan with limit {self.concurrency} on port {self.port}...{RESET}")
 
-        self.total = self.count_targets(ranges_list)
+        self.total = self.count_targets(ranges_input)
         queue = asyncio.Queue(maxsize=self.concurrency * 2)
 
         # Create a single session for all requests
@@ -89,7 +113,7 @@ class CIDRScanner:
             workers = [asyncio.create_task(self.worker(session, queue)) for _ in range(self.concurrency)]
 
             # Feed the queue
-            for ip in self.generate_targets(ranges_list):
+            for ip in self.generate_targets(ranges_input):
                 await queue.put(ip)
 
             # Wait for queue to be empty
@@ -102,6 +126,6 @@ class CIDRScanner:
         duration = int(time.time() - self.start_time)
         console.print(f"\n{MAGENTA}[✓] Scan finished in {duration}s. Total IPs: {self.total}{RESET}")
 
-    def run(self, ranges_list):
+    def run(self, ranges_input):
         """Entry point to run async scan from sync context"""
-        asyncio.run(self.start_scan(ranges_list))
+        asyncio.run(self.start_scan(ranges_input))

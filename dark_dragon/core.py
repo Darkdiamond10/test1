@@ -76,7 +76,14 @@ class DarkDragonCore:
     def cidr_menu(self):
         ScannerUtils.clear_screen()
         console.print("[cyan]--- CIDR Scanner (Async) ---[/cyan]")
-        ranges = console.input("Enter IP ranges (comma separated): ").strip().split(',')
+        raw_input = console.input("Enter IP ranges (comma separated) or file path: ").strip()
+
+        # Determine if input is file or list
+        if ScannerUtils.check_file_exists(raw_input):
+            ranges_input = raw_input
+        else:
+            ranges_input = raw_input.split(',')
+
         try:
             port = int(console.input("Port (80/443): ").strip())
         except:
@@ -91,7 +98,7 @@ class DarkDragonCore:
         output = console.input("Output file (results.txt): ").strip() or "results.txt"
 
         scanner = CIDRScanner(port, threads, output)
-        scanner.run(ranges)
+        scanner.run(ranges_input)
         console.input("\nPress Enter...")
 
     def recon_menu(self):
