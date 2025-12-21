@@ -1,7 +1,7 @@
 import asyncio
 import aiohttp
 import time
-from .utils import console, G, R, C, YELLOW, MAGENTA, RESET, TargetUtils
+from .utils import console, TargetUtils
 
 class CIDRScanner:
     def __init__(self, port, concurrency, output_file):
@@ -32,7 +32,7 @@ class CIDRScanner:
 
         # Logic from original script: Ignore 302/307
         if status in (302, 307):
-            console.print(f"{YELLOW}[{self.progress}/{self.total}] {ip:<15} | {status:<3} | {server:<20} | CF-RAY: {cf_ray} [IGNORED]{RESET}")
+            console.print(f"[yellow][{self.progress}/{self.total}] {ip:<15} | {status:<3} | {server:<20} | CF-RAY: {cf_ray} [IGNORED][/yellow]")
             return
 
         is_cdn = any(cdn in server for cdn in self.cdn_keywords)
@@ -44,8 +44,8 @@ class CIDRScanner:
                 f.write(result_line)
 
         # Output to screen
-        color = G if is_cdn else (C if status != 0 else R)
-        console.print(f"{color}[{self.progress}/{self.total}] {ip:<15} | {status:<3} | {server:<20} | CF-RAY: {cf_ray}{RESET}")
+        color_tag = "[green]" if is_cdn else ("[cyan]" if status != 0 else "[red]")
+        console.print(f"{color_tag}[{self.progress}/{self.total}] {ip:<15} | {status:<3} | {server:<20} | CF-RAY: {cf_ray}[/{color_tag[1:]}")
 
     async def worker(self, session, queue):
         while True:
@@ -56,7 +56,7 @@ class CIDRScanner:
                 queue.task_done()
 
     async def start_scan(self, ranges_input):
-        console.print(f"{YELLOW}→ Preparing scan with limit {self.concurrency} on port {self.port}...{RESET}")
+        console.print(f"[yellow]→ Preparing scan with limit {self.concurrency} on port {self.port}...[/yellow]")
 
         self.total = TargetUtils.count_targets(ranges_input)
         queue = asyncio.Queue(maxsize=self.concurrency * 2)
@@ -79,7 +79,7 @@ class CIDRScanner:
                 w.cancel()
 
         duration = int(time.time() - self.start_time)
-        console.print(f"\n{MAGENTA}[✓] Scan finished in {duration}s. Total IPs: {self.total}{RESET}")
+        console.print(f"\n[magenta][✓] Scan finished in {duration}s. Total IPs: {self.total}[/magenta]")
 
     def run(self, ranges_input):
         """Entry point to run async scan from sync context"""

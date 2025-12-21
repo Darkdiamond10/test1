@@ -1,6 +1,7 @@
 import sys
 import asyncio
-from .utils import ScannerUtils, console, C, RESET, R
+import os
+from .utils import ScannerUtils, console
 from .network import NetworkScanner, AsyncNetworkScanner
 from .cidr import CIDRScanner
 from .recon import SubdomainRecon
@@ -77,7 +78,14 @@ class DarkDragonCore:
     def cidr_menu(self):
         ScannerUtils.clear_screen()
         console.print("[cyan]--- CIDR Scanner (Async) ---[/cyan]")
-        ranges = console.input("Enter IP ranges (comma separated): ").strip().split(',')
+        ranges_input = console.input("Enter IP ranges (comma separated) or file path (.txt): ").strip()
+
+        # Smart input detection
+        if os.path.isfile(ranges_input):
+            ranges = ranges_input
+        else:
+            ranges = ranges_input.split(',')
+
         try:
             port = int(console.input("Port (80/443): ").strip())
         except:
