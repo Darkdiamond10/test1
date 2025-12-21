@@ -3,23 +3,10 @@ import sys
 import time
 import threading
 import ipaddress
-from colorama import init, Fore, Style
 from rich.console import Console
-
-# Initialize colorama
-init(autoreset=True)
 
 # Initialize Rich Console
 console = Console()
-
-# --- Constants & Configuration ---
-# Colors for raw print if needed (prefer Rich where possible)
-G = Fore.GREEN
-R = Fore.RED
-C = Fore.CYAN
-YELLOW = Fore.YELLOW
-MAGENTA = Fore.MAGENTA
-RESET = Style.RESET_ALL
 
 BANNER = """
 [bold red]
@@ -52,12 +39,8 @@ class ScannerUtils:
 
     @staticmethod
     def slow_print(text, delay=0.03):
-        """Prints text slowly for effect."""
-        for char in text:
-            sys.stdout.write(char)
-            sys.stdout.flush()
-            time.sleep(delay)
-        print()
+        """Prints text using rich console to support styling."""
+        console.print(text)
 
 class TargetUtils:
     @staticmethod
@@ -91,7 +74,7 @@ class TargetUtils:
                 # Assume it's a domain if not a valid IP/CIDR
                 yield net
             except Exception as e:
-                console.print(f"{R}[!] Invalid range: {net} ({e}){RESET}")
+                console.print(f"[red][!] Invalid range: {net} ({e})[/red]")
 
     @staticmethod
     def count_targets(ranges_input):
