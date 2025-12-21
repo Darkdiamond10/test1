@@ -1,7 +1,7 @@
 import socket
 import dns.resolver
 import time
-from .utils import console, G, R, RESET, ScannerUtils
+from .utils import console, ScannerUtils
 
 class DNSScanner:
     @staticmethod
@@ -26,12 +26,12 @@ class DNSScanner:
             answer = resolver.resolve('google.com', 'A')
             duration = time.time() - start
 
-            results.append(f"{G}[+] DNS Open (UDP) - Resolved google.com in {duration:.2f}s{RESET}")
+            results.append(f"[green][+] DNS Open (UDP) - Resolved google.com in {duration:.2f}s[/green]")
             for r in answer:
                 results.append(f"    - {r}")
 
         except Exception as e:
-            results.append(f"{R}[-] DNS Resolution (UDP) failed: {e}{RESET}")
+            results.append(f"[red][-] DNS Resolution (UDP) failed: {e}[/red]")
 
         return "\n".join(results)
 

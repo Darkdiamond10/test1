@@ -4,7 +4,7 @@ import asyncio
 import aiohttp
 import requests
 import time
-from .utils import console, TargetUtils, G, R, C, YELLOW, MAGENTA, RESET
+from .utils import console, TargetUtils
 
 class NetworkScanner:
     # Legacy synchronous methods (kept for backward compatibility or single target use)
@@ -196,21 +196,21 @@ class AsyncNetworkScanner:
 
                 if result[0]:
                     # Positive result
-                    console.print(f"{G}[{self.progress}/{self.total}] {target} | {result[1]}{RESET}")
+                    console.print(f"[green][{self.progress}/{self.total}] {target} | {result[1]}[/green]")
                     if self.output_file:
                         loop = asyncio.get_event_loop()
                         await loop.run_in_executor(None, self._append_to_file, f"{target}:{self.port}\n")
                 else:
                     # Negative result
-                     console.print(f"{R}[{self.progress}/{self.total}] {target} | {result[1]}{RESET}")
+                     console.print(f"[red][{self.progress}/{self.total}] {target} | {result[1]}[/red]")
 
             except Exception as main_e:
-                console.print(f"{R}[!] Error scanning {target}: {main_e}{RESET}")
+                console.print(f"[red][!] Error scanning {target}: {main_e}[/red]")
             finally:
                 queue.task_done()
 
     async def start_scan(self, targets_input):
-        console.print(f"{YELLOW}→ Preparing bulk scan ({self.mode}) with limit {self.concurrency}...{RESET}")
+        console.print(f"[yellow]→ Preparing bulk scan ({self.mode}) with limit {self.concurrency}...[/yellow]")
 
         self.total = TargetUtils.count_targets(targets_input)
         queue = asyncio.Queue(maxsize=self.concurrency * 2)
@@ -228,7 +228,7 @@ class AsyncNetworkScanner:
                 w.cancel()
 
         duration = int(time.time() - self.start_time)
-        console.print(f"\n{MAGENTA}[✓] Scan finished in {duration}s. Total Targets: {self.total}{RESET}")
+        console.print(f"\n[magenta][✓] Scan finished in {duration}s. Total Targets: {self.total}[/magenta]")
 
     def run_bulk(self, targets_input):
         asyncio.run(self.start_scan(targets_input))
