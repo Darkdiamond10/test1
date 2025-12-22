@@ -1,42 +1,76 @@
-import socket
-import dns.resolver
+import asyncio
+import aiodns
 import time
-from .utils import console, ScannerUtils
+from .utils import console, TargetUtils
 
 class DNSScanner:
-    @staticmethod
-    def check_dns(ip, port=53, timeout=3):
-        """
-        Checks if the IP has an open DNS port (UDP/TCP) and attempts a basic resolution.
-        """
-        results = []
-        # Check UDP
+    def __init__(self, concurrency=50, output_file='valid_dns.txt', timeout=3.0):
+        self.concurrency = concurrency
+        self.output_file = output_file
+        self.timeout = timeout
+        self.total = 0
+        self.progress = 0
+        self.start_time = time.time()
+        with open(self.output_file, 'w') as f:
+            pass
+
+    async def check_ip(self, ip):
         try:
-            sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-            sock.settimeout(timeout)
-            # Just sending a query might not get a response if it's restricted, but connection check on UDP is tricky.
-            # We can try to resolve google.com using this IP as nameserver.
-
-            resolver = dns.resolver.Resolver()
+            resolver = aiodns.DNSResolver(timeout=self.timeout, tries=1)
             resolver.nameservers = [ip]
-            resolver.timeout = timeout
-            resolver.lifetime = timeout
+            await resolver.query('google.com', 'A')
 
-            start = time.time()
-            answer = resolver.resolve('google.com', 'A')
-            duration = time.time() - start
+            with open(self.output_file, 'a') as f:
+                f.write(f"{ip}\n")
 
-            results.append(f"[green][+] DNS Open (UDP) - Resolved google.com in {duration:.2f}s[/green]")
-            for r in answer:
-                results.append(f"    - {r}")
+            console.print(f"[green][+] {ip} is a valid DNS resolver[/green]")
+            return True
+        except Exception:
+            pass
+        finally:
+            self.progress += 1
 
-        except Exception as e:
-            results.append(f"[red][-] DNS Resolution (UDP) failed: {e}[/red]")
+    async def worker(self, queue):
+        while True:
+            ip = await queue.get()
+            try:
+                await self.check_ip(ip)
+            finally:
+                queue.task_done()
 
-        return "\n".join(results)
+    async def producer(self, queue, ranges_input):
+        """Produces IPs into the queue."""
+        for ip in TargetUtils.generate_targets(ranges_input):
+            await queue.put(ip)
 
-    @staticmethod
-    def run_check(ip):
-        console.print(f"[cyan]Scanning DNS on {ip}...[/cyan]")
-        output = DNSScanner.check_dns(ip)
-        console.print(output)
+    async def start_scan(self, ranges_input):
+        console.print(f"[yellow]→ Preparing DNS scan with limit {self.concurrency}...[/yellow]")
+
+        self.total = TargetUtils.count_targets(ranges_input)
+        console.print(f"[cyan]Total targets: {self.total}[/cyan]")
+
+        # Bounded queue to prevent memory issues
+        queue = asyncio.Queue(maxsize=self.concurrency * 2)
+
+        # Start workers
+        workers = [asyncio.create_task(self.worker(queue)) for _ in range(self.concurrency)]
+
+        # Start producer
+        producer_task = asyncio.create_task(self.producer(queue, ranges_input))
+
+        # Wait for producer to finish
+        await producer_task
+
+        # Wait for queue to be fully processed
+        await queue.join()
+
+        # Cancel workers
+        for w in workers:
+            w.cancel()
+
+        duration = int(time.time() - self.start_time)
+        console.print(f"\n[magenta][✓] Scan finished in {duration}s. Valid IPs saved to {self.output_file}[/magenta]")
+
+    def run(self, ranges_input):
+        """Entry point to run async scan from sync context"""
+        asyncio.run(self.start_scan(ranges_input))
