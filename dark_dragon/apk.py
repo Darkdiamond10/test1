@@ -3,6 +3,7 @@ import re
 import zipfile
 import shutil
 import time
+
 from rich.console import Console
 from .utils import ScannerUtils
 
