@@ -126,6 +126,16 @@ class DarkDragonCore:
     def dns_menu(self):
         ScannerUtils.clear_screen()
         console.print("[cyan]--- DNS Scanner ---[/cyan]")
-        ip = console.input("Target IP: ").strip()
-        DNSScanner.run_check(ip)
+        targets_input = console.input("Target IP/CIDR/File: ").strip()
+
+        try:
+            concurrency = int(console.input("Concurrency (default 50): ").strip() or "50")
+        except:
+            concurrency = 50
+
+        output_file = console.input("Output file (valid_dns.txt): ").strip() or "valid_dns.txt"
+
+        scanner = DNSScanner(concurrency, output_file)
+        scanner.run(targets_input)
+
         console.input("\nPress Enter...")
