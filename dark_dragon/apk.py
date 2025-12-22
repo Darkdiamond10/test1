@@ -1,11 +1,14 @@
 import os
 import re
 import zipfile
-import shutil                                                                 import time
+import shutil
+import time
 from rich.console import Console
 from .utils import ScannerUtils
 
-console = Console(force_terminal=True, color_system="256")                                                                              class ApkAnalyzer:
+# ✅ SOLUCIÓN: Forzar soporte de colores para Termux
+console = Console(force_terminal=True, color_system="256")
+class ApkAnalyzer:
     @staticmethod
     def unzip_apk(apk_path, extract_to):
         if not os.path.exists(apk_path):
@@ -15,12 +18,14 @@ console = Console(force_terminal=True, color_system="256")                      
             console.print(f"[yellow][!] Warning: folder '{extract_to}' exists, removing...[/]")
             shutil.rmtree(extract_to)
         try:
-            with zipfile.ZipFile(apk_path, 'r') as zip_ref:                                   zip_ref.extractall(extract_to)
+            with zipfile.ZipFile(apk_path, 'r') as zip_ref:
+                zip_ref.extractall(extract_to)
             console.print(f"[green][+] APK extracted to: {extract_to}[/]")
             return True
         except Exception as e:
             console.print(f"[red][!] Error extracting APK: {e}[/]")
             return False
+
     @staticmethod
     def read_all_files(folder):
         texts = []
@@ -33,6 +38,7 @@ console = Console(force_terminal=True, color_system="256")                      
                 except:
                     pass
         return texts
+
     @staticmethod
     def extract_domains_urls(texts):
         pattern_url = re.compile(r'https?://[^\s"\'<>]+')
@@ -56,6 +62,7 @@ console = Console(force_terminal=True, color_system="256")                      
                 if kw in text_lower:
                     found.add(kw)
         return found
+
     @staticmethod
     def extract_payment_urls(urls):
         payment_keys = ['pay', 'payment', 'checkout', 'billing']
@@ -65,6 +72,7 @@ console = Console(force_terminal=True, color_system="256")                      
                 if key in url.lower():
                     payments.add(url)
         return payments
+
     @staticmethod
     def check_cdn(domain):
         cdn_keywords = ['alicdn', 'akamai', 'cloudflare', 'fastly', 'amazon', 'edgekey', 'cdn']
@@ -91,12 +99,13 @@ console = Console(force_terminal=True, color_system="256")                      
     @staticmethod
     def run():
         ScannerUtils.print_banner()
-
+        
+        # USO DE TRIPLES COMILLAS PARA EVITAR SYNTAX ERROR
         console.print(f"""[red]
     ☠️☠️☠️ APK CDN HUNTER ☠️☠️☠️
     🔥 SCANNING APK FILE FOR SECRET DOMAINS 🔥
     [/]""")
-
+        
         apk_path = console.input(f"[cyan]🔍 Enter APK file path: [/]").strip()
         result_folder = console.input(f"[cyan]💾 Enter folder name to save results: [/]").strip()
 
@@ -125,6 +134,7 @@ console = Console(force_terminal=True, color_system="256")                      
         console.print(f"[green][✔] Saving results ...[/]")
         ApkAnalyzer.save_results(result_folder, urls, domains, keywords, cdn_domains, payments)
 
+        # USO DE TRIPLES COMILLAS AQUÍ TAMBIÉN PARA EVITAR ERROR EN LA LÍNEA 125
         console.print(f"""[yellow]
 [✔] Scan complete! Results saved in folder: {result_folder}
 Check files:
