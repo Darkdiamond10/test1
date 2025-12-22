@@ -41,7 +41,10 @@ class ApkAnalyzer:
 
     @staticmethod
     def extract_domains_urls(texts):
+        # Regex to match URLs: http or https, followed by non-whitespace/quote characters
         pattern_url = re.compile(r'https?://[^\s"\'<>]+')
+        # Updated regex to support more TLDs and fix partial matches (e.g. .co.uk)
+        # Simplified: match alphanum/dash dot alphanum/dash, length 2+
         pattern_domain = re.compile(r'(?:[a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}')
         urls = set()
         domains = set()
