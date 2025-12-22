@@ -7,7 +7,6 @@ import time
 from rich.console import Console
 from .utils import ScannerUtils
 
-# ✅ SOLUCIÓN: Forzar soporte de colores para Termux
 console = Console(force_terminal=True, color_system="256")
 class ApkAnalyzer:
     @staticmethod
@@ -101,7 +100,6 @@ class ApkAnalyzer:
     def run():
         ScannerUtils.print_banner()
         
-        # USO DE TRIPLES COMILLAS PARA EVITAR SYNTAX ERROR
         console.print(f"""[red]
     ☠️☠️☠️ APK CDN HUNTER ☠️☠️☠️
     🔥 SCANNING APK FILE FOR SECRET DOMAINS 🔥
@@ -135,7 +133,6 @@ class ApkAnalyzer:
         console.print(f"[green][✔] Saving results ...[/]")
         ApkAnalyzer.save_results(result_folder, urls, domains, keywords, cdn_domains, payments)
 
-        # USO DE TRIPLES COMILLAS AQUÍ TAMBIÉN PARA EVITAR ERROR EN LA LÍNEA 125
         console.print(f"""[yellow]
 [✔] Scan complete! Results saved in folder: {result_folder}
 Check files:
