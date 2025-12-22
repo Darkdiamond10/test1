@@ -3,5 +3,5 @@
 
 Run to execute
 ```
-main.py
+python3 main.py
 ```
