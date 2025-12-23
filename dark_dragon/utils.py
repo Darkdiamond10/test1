@@ -8,14 +8,15 @@ from rich.console import Console
 # Initialize Rich Console
 console = Console()
 
-BANNER = """
+BANNER = r"""
 [bold red]
 ________               ______  _______
 ___  __ \_____ _________  /__  __  __ \_____________________________________
-__  / / /  __ `/_  ___/  //_/  / / /  /_  ___/  __ `/_  __ `/  __ \_  __ \\
+__  / / /  __ `/_  ___/  //_/  / / /  /_  ___/  __ `/_  __ `/  __ \_  __ \
 _  /_/ // /_/ /_  /   _  ,<   _  /_/ /_  /   / /_/ /_  /_/ // /_/ /  / / /
 /_____/ \__,_/ /_/    /_/|_|  /_____/ /_/    \__,_/ _\__, / \____//_/ /_/
-[/bold red]                 
+                                                    /____/
+[/bold red]
 [bold magenta]        >>> Network Security Analysis Tool <<<[/bold magenta]
 """
 
